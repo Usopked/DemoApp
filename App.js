@@ -3,11 +3,11 @@ import * as React from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import { SwipeListView } from "react-native-swipe-list-view";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { KeyboardAvoidingView, Platform } from "react-native";
 
 const DATA = [
-  { timestamp: Date.now(), text: "Sample Text" },
-  { timestamp: Date.now() + 1, text: "Sample Text2" },
+  { timestamp: Date.now(), text: "Sample Text", isEditing: false, isStriked: false },
+  { timestamp: Date.now() + 1, text: "Sample Text2", isEditing: false, isStriked: false },
 ];
 
 export default function App() {
@@ -16,16 +16,44 @@ export default function App() {
 
   const handleDelete = (timestamp) => {
     const res = data.filter((item) => item.timestamp !== timestamp);
-    console.log(res);
     setData([...res]);
   };
 
   const handleAdd = () => {
-    const res = { timestamp: Date.now(), text: text };
+    const res = { timestamp: Date.now(), text: text, isEditing: false, isStriked: false };
     setData([...data, res]);
+    setText(""); // 추가 후 입력창 비우기
   };
 
-  const renderItem = ({ item, index }) => {
+  const handleEdit = (timestamp) => {
+    const updatedData = data.map((item) =>
+      item.timestamp === timestamp ? { ...item, isEditing: true } : item
+    );
+    setData(updatedData);
+  };
+
+  const handleSaveEdit = (timestamp, newText) => {
+    const updatedData = data.map((item) =>
+      item.timestamp === timestamp ? { ...item, text: newText } : item
+    );
+    setData(updatedData);
+  };
+
+  const handleEndEditing = (timestamp) => {
+    const updatedData = data.map((item) =>
+      item.timestamp === timestamp ? { ...item, isEditing: false } : item
+    );
+    setData(updatedData);
+  };
+
+  const handleStrikeThrough = (timestamp) => {
+    const updatedData = data.map((item) =>
+      item.timestamp === timestamp ? { ...item, isStriked: !item.isStriked } : item
+    );
+    setData(updatedData);
+  };
+
+  const renderItem = ({ item }) => {
     return (
       <View
         style={{
@@ -40,58 +68,87 @@ export default function App() {
         }}
       >
         <View style={{ width: hp(4), height: hp(4), backgroundColor: "#8D71FE", borderRadius: 4, marginHorizontal: wp(5), opacity: 0.4 }} />
-        <Text style={{ width: wp(60) }}>{item.text}</Text>
+        {item.isEditing ? (
+          <TextInput
+            style={{ width: wp(60), textDecorationLine: item.isStriked ? "line-through" : "none" }}
+            value={item.text}
+            onChangeText={(newText) => handleSaveEdit(item.timestamp, newText)}
+            autoFocus
+            onEndEditing={() => handleEndEditing(item.timestamp)}
+          />
+        ) : (
+          <Text style={{ width: wp(60), textDecorationLine: item.isStriked ? "line-through" : "none" }}>
+            {item.text}
+          </Text>
+        )}
         <View style={{ width: hp(2), height: hp(2), backgroundColor: "#8D71FE", borderRadius: 100, marginHorizontal: wp(3) }} />
       </View>
     );
   };
-  const renderHiddenItem = ({ item, index }) => {
+
+  const renderHiddenItem = ({ item }) => {
     return (
       <View style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: wp(5), paddingVertical: hp(2.5) }}>
-        <Pressable onPress={null}>
+        <Pressable onPress={() => handleEdit(item.timestamp)}>
           <Text style={{ fontSize: hp(3) }}>✍🏻</Text>
         </Pressable>
-        <Pressable onPress={()=>handleDelete(item.timestamp)}>
+        <Pressable onPress={() => handleDelete(item.timestamp)}>
           <Text style={{ fontSize: hp(3) }}>🗑</Text>
         </Pressable>
       </View>
     );
   };
+
   return (
-    <View style={styles.container}>
-      <KeyboardAwareScrollView bounces={false}>
-        <View style={{ width: wp(100), height: hp(20), justifyContent: "center", paddingLeft: wp(10) }}>
-          <Text style={{ fontSize: hp(3), fontWeight: "bold" }}>✔️To do list</Text>
-        </View>
-        <View style={{ width: wp(100), height: hp(70) }}>
-          <SwipeListView data={data} renderItem={renderItem} leftOpenValue={wp(10)} rightOpenValue={-wp(10)} renderHiddenItem={renderHiddenItem} />
-        </View>
-        <View style={{ width: wp(100), height: hp(10), flexDirection: "row" }}>
-          <TextInput
-            placeholder="please write the text."
-            value={text}
-            onChangeText={(item) => setText(item)}
-            placeholderTextColor="#aaa"
-            style={{ width: wp(60), marginLeft: wp(10), backgroundColor: "#FFF", height: hp(5), paddingLeft: wp(3), borderRadius: 10 }}
-          />
-          <Pressable
-            style={{
-              width: hp(5),
-              height: hp(5),
-              marginLeft: wp(10),
-              backgroundColor: "#fff",
-              justifyContent: "center",
-              alignItems: "center",
-              borderRadius: 100,
-            }}
-            onPress={handleAdd}
-          >
-            <Text>➕</Text>
-          </Pressable>
-        </View>
-      </KeyboardAwareScrollView>
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.container}>
+      <View style={{ width: wp(100), height: hp(20), justifyContent: "center", paddingLeft: wp(10) }}>
+        <Text style={{ fontSize: hp(3), fontWeight: "bold" }}>✔️To do list</Text>
+      </View>
+      <View style={{ width: wp(100), height: hp(70) }}>
+        <SwipeListView
+          data={data}
+          renderItem={renderItem}
+          leftOpenValue={wp(15)}  // 왼쪽 스와이프 열림 값 설정
+          rightOpenValue={-wp(15)} // 오른쪽 스와이프 열림 값 설정
+          renderHiddenItem={renderHiddenItem}
+          disableRightSwipe={false}  // 왼쪽 스와이프 허용
+          onRowOpen={(rowKey, rowMap, toValue) => {
+            if (toValue < 0) { // 오른쪽으로 스와핑될 때만
+              handleStrikeThrough(rowMap[rowKey]?.props?.item?.timestamp);
+            }
+          }}
+          onRowDidOpen={(rowKey, rowMap, toValue) => {
+            if (toValue > 0) { // 왼쪽으로 스와핑될 때만
+              handleEdit(rowMap[rowKey]?.props?.item?.timestamp);
+            }
+          }}
+        />
+      </View>
+      <View style={{ width: wp(100), height: hp(10), flexDirection: "row" }}>
+        <TextInput
+          placeholder="Please write the text."
+          value={text}
+          onChangeText={(item) => setText(item)}
+          placeholderTextColor="#aaa"
+          style={{ width: wp(60), marginLeft: wp(10), backgroundColor: "#FFF", height: hp(5), paddingLeft: wp(3), borderRadius: 10 }}
+        />
+        <Pressable
+          style={{
+            width: hp(5),
+            height: hp(5),
+            marginLeft: wp(10),
+            backgroundColor: "#fff",
+            justifyContent: "center",
+            alignItems: "center",
+            borderRadius: 100,
+          }}
+          onPress={handleAdd}
+        >
+          <Text>➕</Text>
+        </Pressable>
+      </View>
       <StatusBar style="auto" />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
