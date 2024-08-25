@@ -163,7 +163,7 @@ export default function App() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "position" : "height"}
+      behavior={Platform.OS === "ios" ? "height" : "height"}
       style={styles.container}
       keyboardVerticalOffset={Platform.OS === "ios" ? hp(10) : 0}
     >
@@ -205,10 +205,11 @@ export default function App() {
           <View
             style={{
               width: wp(100),
-              height: hp(10),
+              height: hp(12),
               flexDirection: "row",
               alignItems: "center",
-              paddingBottom: hp(2),
+              paddingBottom: hp(4),
+              marginTop: hp(4),
             }}
           >
             <TextInput
