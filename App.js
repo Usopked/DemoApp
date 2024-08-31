@@ -1,256 +1,140 @@
-import { StatusBar } from "expo-status-bar";
 import * as React from "react";
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  Platform,
-  KeyboardAvoidingView,
-  TouchableWithoutFeedback,
-  Keyboard,
-} from "react-native";
-import {
-  widthPercentageToDP as wp,
-  heightPercentageToDP as hp,
-} from "react-native-responsive-screen";
-import { SwipeListView } from "react-native-swipe-list-view";
+import { StatusBar } from "expo-status-bar";
+import { StyleSheet, Text, View, Image, Pressable, FlatList } from "react-native";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 
-const DATA = [
-  {
-    timestamp: Date.now(),
-    text: "Sample Text",
-    isEditing: false,
-    isStriked: false,
-  },
-  {
-    timestamp: Date.now() + 1,
-    text: "Sample Text2",
-    isEditing: false,
-    isStriked: false,
-  },
-];
+const CITY = ["Seoul", "Tokyo", "Beijing", "Shanghai"];
+const APIKEY = "06467cd3dc1fdc733e509c4d7ef6e5a0";
 
 export default function App() {
-  const [text, setText] = React.useState("");
-  const [data, setData] = React.useState(DATA);
+  const [isReady, setReady] = React.useState(false);
+  const [data, setData] = React.useState([]);
+  const [region, setRegion] = React.useState("Seoul");
 
-  const handleDelete = (timestamp) => {
-    const updatedData = data.filter((item) => item.timestamp !== timestamp);
-    setData(updatedData);
-  };
+  React.useEffect(() => {
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${region}&appid=${APIKEY}`);
+        const json = await response.json();
+        console.log(json);
+        setData(json);
+      } catch (err) {
+        console.log(err);
+      }
+    }, 0);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [region]);
 
-  const handleAdd = () => {
-    if (text.trim()) {
-      const newItem = {
-        timestamp: Date.now(),
-        text,
-        isEditing: false,
-        isStriked: false,
-      };
-      setData((prevData) => [...prevData, newItem]);
-      setText(""); // 추가 후 입력창 비우기
-      Keyboard.dismiss(); // 입력 완료 후 키보드 숨기기
-    }
-  };
-
-  const handleEdit = (timestamp) => {
-    const updatedData = data.map((item) =>
-      item.timestamp === timestamp ? { ...item, isEditing: true } : item
-    );
-    setData(updatedData);
-  };
-
-  const handleSaveEdit = (timestamp, newText) => {
-    const updatedData = data.map((item) =>
-      item.timestamp === timestamp ? { ...item, text: newText } : item
-    );
-    setData(updatedData);
-  };
-
-  const handleEndEditing = (timestamp) => {
-    const updatedData = data.map((item) =>
-      item.timestamp === timestamp ? { ...item, isEditing: false } : item
-    );
-    setData(updatedData);
-  };
-
-  const handleStrikeThrough = (timestamp) => {
-    const updatedData = data.map((item) =>
-      item.timestamp === timestamp ? { ...item, isStriked: !item.isStriked } : item
-    );
-    setData(updatedData);
-  };
-
-  const renderItem = ({ item }) => {
+  const renderItem = ({ item, index }) => {
     return (
-      <View
+      <Pressable
         style={{
-          width: wp(90),
-          height: wp(90) / 4,
-          backgroundColor: "#FFF",
-          marginHorizontal: wp(5),
           borderRadius: 10,
-          marginBottom: hp(2),
-          flexDirection: "row",
           alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: item === region ? "#BBACF2" : "#BEC0D1",
+          marginHorizontal: wp(3),
+          width: wp(20),
+          height: hp(5),
         }}
+        onPress={() => setRegion(item)}
       >
-        <View
-          style={{
-            width: hp(4),
-            height: hp(4),
-            backgroundColor: "#8D71FE",
-            borderRadius: 4,
-            marginHorizontal: wp(5),
-            opacity: 0.4,
-          }}
-        />
-        {item.isEditing ? (
-          <TextInput
-            style={{
-              width: wp(60),
-              textDecorationLine: item.isStriked ? "line-through" : "none",
-            }}
-            value={item.text}
-            onChangeText={(newText) => handleSaveEdit(item.timestamp, newText)}
-            autoFocus
-            onEndEditing={() => handleEndEditing(item.timestamp)}
-          />
-        ) : (
-          <Text
-            style={{
-              width: wp(60),
-              textDecorationLine: item.isStriked ? "line-through" : "none",
-            }}
-          >
-            {item.text}
-          </Text>
-        )}
-        <View
-          style={{
-            width: hp(2),
-            height: hp(2),
-            backgroundColor: "#8D71FE",
-            borderRadius: 100,
-            marginHorizontal: wp(3),
-          }}
-        />
-      </View>
+        <Text style={{ color: "#fff" }}>{item}</Text>
+      </Pressable>
     );
   };
-
-  const renderHiddenItem = ({ item }) => {
+  const renderItem2 = ({ item, index }) => {
     return (
       <View
         style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          paddingHorizontal: wp(5),
-          paddingVertical: hp(2.5),
+          borderRadius: 10,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#fff",
+          marginTop: hp(2),
+          marginHorizontal: wp(4),
+          width: wp(30),
+          height: wp(30),
         }}
       >
-        <Pressable onPress={() => handleEdit(item.timestamp)}>
-          <Text style={{ fontSize: hp(3) }}>✍🏻</Text>
-        </Pressable>
-        <Pressable onPress={() => handleDelete(item.timestamp)}>
-          <Text style={{ fontSize: hp(3) }}>🗑</Text>
-        </Pressable>
+        <Text style={{ color: "#BBACF2", fontSize: hp(2), marginBottom: 10, fontWeight: "bold" }}>{item.key}</Text>
+        <Text style={{ color: "#ccc", fontSize: hp(2) }}>{item.value}</Text>
       </View>
     );
   };
 
-  return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "height" : "height"}
-      style={styles.container}
-      keyboardVerticalOffset={Platform.OS === "ios" ? hp(10) : 0}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={{ flex: 1 }}>
-          <View
-            style={{
-              width: wp(100),
-              height: hp(20),
-              justifyContent: "center",
-              paddingLeft: wp(10),
-            }}
-          >
-            <Text style={{ fontSize: hp(3), fontWeight: "bold" }}>
-              ✔️ To do list
-            </Text>
-          </View>
-          <View style={{ width: wp(100), height: hp(60) }}>
-            <SwipeListView
-              data={data}
-              renderItem={renderItem}
-              leftOpenValue={wp(15)}
-              rightOpenValue={-wp(15)}
-              renderHiddenItem={renderHiddenItem}
-              disableRightSwipe={false}
-              keyExtractor={(item) => item.timestamp.toString()} // timestamp를 키로 사용
-              onRowOpen={(rowKey, rowMap, toValue) => {
-                if (toValue < 0) {
-                  handleStrikeThrough(Number(rowKey)); // rowKey를 timestamp로 간주
-                }
-              }}
-              onRowDidOpen={(rowKey, rowMap, toValue) => {
-                if (toValue > 0) {
-                  handleEdit(Number(rowKey)); // rowKey를 timestamp로 간주
-                }
-              }}
-            />
-          </View>
-          <View
-            style={{
-              width: wp(100),
-              height: hp(12),
-              flexDirection: "row",
-              alignItems: "center",
-              paddingBottom: hp(4),
-              marginTop: hp(4),
-            }}
-          >
-            <TextInput
-              placeholder="이곳에 글을 적어주세요."
-              value={text}
-              onChangeText={setText}
-              placeholderTextColor="#aaa"
-              style={{
-                width: wp(60),
-                marginLeft: wp(10),
-                backgroundColor: "#FFF",
-                height: hp(5),
-                paddingLeft: wp(3),
-                borderRadius: 10,
-              }}
-            />
-            <Pressable
-              style={{
-                width: hp(5),
-                height: hp(5),
-                marginLeft: wp(10),
-                backgroundColor: "#fff",
-                justifyContent: "center",
-                alignItems: "center",
-                borderRadius: 100,
-              }}
-              onPress={handleAdd}
-            >
-              <Text>➕</Text>
-            </Pressable>
-          </View>
-          <StatusBar style="auto" />
+  if (isReady) {
+    return (
+      <View style={styles.container2}>
+        <View>
+          <FlatList showsHorizontalScrollIndicator={false} horizontal data={CITY} renderItem={renderItem} keyExtractor={(item, index) => index.toString()} />
         </View>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+        <View style={{ marginTop: hp(5), alignSelf: "center", width: wp(70), height: hp(40), backgroundColor: "#fff", borderRadius: 20 }}>
+          <Image
+            style={{ width: wp(60), height: wp(60), alignSelf: "center" }}
+            source={{
+              uri: `http://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`,
+            }}
+          />
+          <Text style={{ textAlign: "center", fontSize: hp(5), fontWeight: "bold" }}>{data.weather[0].main}</Text>
+          <Text style={{ textAlign: "center", fontSize: hp(4), color: "#bbb" }}>{data.weather[0].description}</Text>
+        </View>
+        <View style={{ alignItems: "center" }}>
+          <FlatList
+            numColumns={2}
+            data={[
+              { key: "Min Temp", value: data.main.temp_min },
+              { key: "Max Temp", value: data.main.temp_max },
+              { key: "Pressure", value: data.main.pressure },
+              { key: "Humidity", value: data.main.humidity },
+            ]}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={renderItem2}
+          />
+        </View>
+        <StatusBar style="auto" />
+      </View>
+    );
+  }
+  return (
+    <View style={styles.container}>
+      <Image style={{ marginTop: hp(20), width: wp(70), height: wp(70), alignSelf: "center" }} source={require("./assets/icon.png")} />
+      <Text style={{ marginTop: hp(5), width: wp(70), textAlign: "center", alignSelf: "center", fontSize: hp(3) }}>
+        <Text style={{ color: "#BBACF2", fontWeight: "bold" }}>Find</Text> your weather predictions in your City
+      </Text>
+      <Text style={{ marginTop: hp(2), width: wp(70), textAlign: "center", alignSelf: "center", fontSize: hp(2), color: "#bbb" }}>
+        Easy steps to predict the weather and make your day easier
+      </Text>
+      <Pressable
+        style={{
+          width: wp(50),
+          height: hp(6),
+          marginTop: hp(15),
+          backgroundColor: "#BBACF2",
+          alignSelf: "center",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: 10,
+        }}
+        onPress={() => setReady(true)}
+      >
+        <Text style={{ fontSize: hp(2), color: "#fff", fontWeight: "bold" }}>Get start</Text>
+      </Pressable>
+      <StatusBar style="auto" />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#E8EAED",
+    backgroundColor: "#EAE6F5",
+  },
+  container2: {
+    flex: 1,
+    backgroundColor: "#EAE6F5",
+    paddingTop: hp(10),
   },
 });
