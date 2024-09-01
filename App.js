@@ -75,7 +75,7 @@ export default function App() {
           <Image
             style={{ width: wp(60), height: wp(60), alignSelf: "center" }}
             source={{
-              uri: `http://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`,
+              uri: `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`,
             }}
           />
           <Text style={{ textAlign: "center", fontSize: hp(5), fontWeight: "bold" }}>{data.weather[0].main}</Text>
