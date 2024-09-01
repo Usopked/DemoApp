@@ -79,17 +79,17 @@ export default function App() {
             }}
           />
           <Text style={{ textAlign: "center", fontSize: hp(5), fontWeight: "bold" }}>{data.weather[0].main}</Text>
-          <Text style={{ textAlign: "center", fontSize: hp(4), color: "#bbb" }}>{data.weather[0].description}</Text>
+          {/*<Text style={{ textAlign: "center", fontSize: hp(4), color: "#bbb" }}>{data.weather[0].description}</Text>*/}
         </View>
         <View style={{ alignItems: "center" }}>
           <FlatList
             numColumns={2}
             data={[
-              { key: "Min Temp", value: data.main.temp_min },
-              { key: "Max Temp", value: data.main.temp_max },
-              { key: "Pressure", value: data.main.pressure },
-              { key: "Humidity", value: data.main.humidity },
-            ]}
+  { key: "최저온도", value: (data.main.temp_min - 273.15).toFixed(2) + " °C" },
+  { key: "최고온도", value: (data.main.temp_max - 273.15).toFixed(2) + " °C" },
+  { key: "기압", value: data.main.pressure + " hPa" },
+  { key: "습도", value: data.main.humidity + " %" },
+]}
             keyExtractor={(item, index) => index.toString()}
             renderItem={renderItem2}
           />
@@ -100,7 +100,7 @@ export default function App() {
   }
   return (
     <View style={styles.container}>
-      <Image style={{ marginTop: hp(20), width: wp(70), height: wp(70), alignSelf: "center" }} source={require("./assets/icon.png")} />
+      <Image style={{ marginTop: hp(20), width: wp(70), height: wp(70), alignSelf: "center" }} source={require("./assets/image-3.png")} />
       <Text style={{ marginTop: hp(5), width: wp(70), textAlign: "center", alignSelf: "center", fontSize: hp(3) }}>
         <Text style={{ color: "#BBACF2", fontWeight: "bold" }}>Find</Text> your weather predictions in your City
       </Text>
